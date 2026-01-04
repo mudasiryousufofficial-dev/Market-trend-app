@@ -1,0 +1,5 @@
+{
+  "name": "MarketPulse Trends",
+  "description": "Real-time digital marketing trend tracker powered by Gemini with Google Search grounding.",
+  "requestFramePermissions": []
+}
