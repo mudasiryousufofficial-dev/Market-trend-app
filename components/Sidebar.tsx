@@ -13,6 +13,7 @@ interface SidebarProps {
   toggleSidebar: () => void;
   userPersona: UserPersona;
   onSelectPersona: (persona: UserPersona) => void;
+  onOpenMotivation?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -21,7 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isOpen, 
   toggleSidebar,
   userPersona,
-  onSelectPersona
+  onSelectPersona,
+  onOpenMotivation
 }) => {
   return (
     <>
@@ -40,10 +42,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-2xl
           transform transition-transform duration-300 ease-in-out z-50
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0 md:static md:block
+          md:translate-x-0 md:static md:block flex flex-col
         `}
       >
-        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+        <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-indigo-400">
             <div className="bg-indigo-500/20 p-1.5 rounded-lg border border-indigo-500/30">
               <Icons.Zap size={20} className="fill-current text-indigo-300" />
@@ -55,8 +57,22 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        <nav className="p-4 space-y-2 h-[calc(100vh-220px)] overflow-y-auto">
-          <div className="text-xs font-bold text-slate-500/80 uppercase tracking-widest mb-4 px-2 mt-2">
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+          {/* Motivation Button */}
+          {onOpenMotivation && (
+             <button
+                onClick={() => {
+                  onOpenMotivation();
+                  if (window.innerWidth < 768) toggleSidebar();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all mb-4 group shadow-sm"
+             >
+                <Icons.Sparkles size={18} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>Daily Inspiration</span>
+             </button>
+          )}
+
+          <div className="text-xs font-bold text-slate-500/80 uppercase tracking-widest mb-2 px-2 mt-2">
             Explore
           </div>
           {CATEGORIES.map((cat) => {
@@ -88,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Persona Selector and Status Footer */}
-        <div className="absolute bottom-0 w-full p-4 border-t border-white/5 bg-gradient-to-t from-black/40 to-transparent space-y-4">
+        <div className="w-full p-4 border-t border-white/5 bg-gradient-to-t from-black/40 to-transparent space-y-4 shrink-0">
           
           {/* Persona Switcher */}
           <div className="space-y-2">

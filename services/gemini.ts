@@ -164,3 +164,44 @@ export const generateSocialPost = async (trend: TrendItem, platform: SocialPlatf
     return "Error generating content. Please check your connection.";
   }
 };
+
+export const fetchMotivation = async (): Promise<{ title: string; story: string }> => {
+  try {
+    const prompt = `
+      Generate a very short, highly motivating story (under 60 words) about a famous entrepreneur or business leader (e.g., Steve Jobs, Oprah, Elon Musk, Jack Ma, Indra Nooyi, Sara Blakely, etc.). 
+      Focus on a specific moment of overcoming failure or resilience.
+      
+      Format the output EXACTLY like this:
+      Title: [Person Name] - [Short 2-3 word theme]
+      Story: [The story content]
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    
+    const text = response.text || '';
+    
+    const titleMatch = text.match(/Title:\s*(.*)/i);
+    const storyMatch = text.match(/Story:\s*([\s\S]*)/i);
+    
+    if (titleMatch && storyMatch) {
+      return {
+        title: titleMatch[1].trim(),
+        story: storyMatch[1].trim()
+      };
+    }
+    
+    return {
+      title: "Resilience",
+      story: text
+    };
+  } catch (error) {
+    console.error("Error fetching motivation:", error);
+    return {
+      title: "Keep Going",
+      story: "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill"
+    };
+  }
+};

@@ -5,8 +5,9 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import TrendCard from './components/TrendCard';
 import DetailView from './components/DetailView';
+import MotivationModal from './components/MotivationModal';
 import { TrendCategory, TrendItem, UserPersona } from './types';
-import { fetchTrends } from './services/gemini';
+import { fetchTrends, fetchMotivation } from './services/gemini';
 import * as Icons from 'lucide-react';
 
 const COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours
@@ -18,6 +19,11 @@ const App: React.FC = () => {
   const [selectedTrend, setSelectedTrend] = useState<TrendItem | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
+  // Motivation Popup State
+  const [showMotivation, setShowMotivation] = useState(false);
+  const [motivationData, setMotivationData] = useState({ title: '', story: '' });
+  const [loadingMotivation, setLoadingMotivation] = useState(false);
+
   // Persona State
   const [userPersona, setUserPersona] = useState<UserPersona>(() => {
     try {
@@ -56,6 +62,34 @@ const App: React.FC = () => {
   // Filter States
   const [minImpact, setMinImpact] = useState<number>(0);
   const [sentimentFilter, setSentimentFilter] = useState<string>('All');
+
+  // Logic to show motivation popup automatically once per day
+  const handleOpenMotivation = async () => {
+    setShowMotivation(true);
+    if (!motivationData.story) {
+        setLoadingMotivation(true);
+        const data = await fetchMotivation();
+        setMotivationData(data);
+        setLoadingMotivation(false);
+    }
+  };
+
+  useEffect(() => {
+    const checkDailyMotivation = async () => {
+        const lastSeen = localStorage.getItem('marketpulse_last_motivation_date');
+        const today = new Date().toDateString();
+        
+        if (lastSeen !== today) {
+            // Show it
+            handleOpenMotivation();
+            localStorage.setItem('marketpulse_last_motivation_date', today);
+        }
+    };
+    
+    // Small delay to let app render first
+    const timer = setTimeout(checkDailyMotivation, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -178,9 +212,13 @@ const App: React.FC = () => {
       setLoading(true);
     }
     
-    let query = `Digital Marketing Trends for ${category}`;
+    // Construct Query Logic
+    let query = "";
+    
     if (category === TrendCategory.ALL) {
       query = "Digital Marketing Trends";
+    } else {
+      query = `Digital Marketing Trends for ${category}`;
     }
       
     const items = await fetchTrends(query, userPersona);
@@ -251,6 +289,11 @@ const App: React.FC = () => {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         userPersona={userPersona}
         onSelectPersona={setUserPersona}
+        onOpenMotivation={() => {
+            // Force refresh when manually opened
+            setMotivationData({ title: '', story: '' });
+            handleOpenMotivation();
+        }}
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -460,6 +503,15 @@ const App: React.FC = () => {
           onToggleReadLater={toggleReadLater}
         />
       )}
+
+      {/* Motivation Popup */}
+      <MotivationModal
+        isOpen={showMotivation}
+        onClose={() => setShowMotivation(false)}
+        title={motivationData.title}
+        story={motivationData.story}
+        loading={loadingMotivation}
+      />
     </div>
   );
 };
